@@ -1,0 +1,142 @@
+# =============================================================================
+# Data sources. Every file the model reads is listed here with its URL.
+# run_acquire.py downloads them into data/raw/ and records URL, time, size and
+# SHA-256 of each file in data/raw/_provenance.csv.
+#
+# Items marked VERIFY were confirmed from the agency's landing page or a
+# published layout, but the exact file name could not be fetched from the
+# build environment. If a download fails, the acquire step prints the landing
+# page to download from by hand; drop the file into the folder it names.
+# =============================================================================
+
+states: all        # "all" or a list of 2-digit state FIPS codes, e.g. ["04","26","37","48","53","55"]
+
+# --- Census Population Estimates Program (PEP) ------------------------------
+pep:
+  base: "https://www2.census.gov/programs-surveys/popest"
+  files:
+    # Vintage 2025 county population by 5-year age group, sex, race, Hispanic origin
+    # Landing page: https://www.census.gov/data/datasets/time-series/demo/popest/2020s-counties-detail.html
+    cc_est2025_alldata: "{base}/datasets/2020-2025/counties/asrh/cc-est2025-alldata-{st}.csv"
+    # Vintage 2025 county totals and components of change (births, deaths, migration)
+    # Landing page: https://www.census.gov/data/datasets/time-series/demo/popest/2020s-counties-total.html
+    co_est2025_alldata: "{base}/datasets/2020-2025/counties/totals/co-est2025-alldata.csv"
+    # 2010-2020 intercensal county population by age, sex, race, Hispanic origin
+    # Landing page: https://www.census.gov/data/datasets/time-series/demo/popest/intercensal-2010-2020-counties-detail.html
+    cc_est2020int_alldata: "{base}/datasets/2010-2020/intercensal/county/asrh/cc-est2020int-alldata-{st}.csv"
+    # 2000-2010 intercensal county population by 5-year age group and sex
+    # Landing page: https://www.census.gov/data/datasets/time-series/demo/popest/intercensal-2000-2010-counties.html
+    co_est00int_agesex: "{base}/datasets/2000-2010/intercensal/county/co-est00int-agesex-5yr.csv"
+    # Vintage 2020 and Vintage 2009 county components (for births, 2000-2020)   VERIFY
+    co_est2020_alldata: "{base}/datasets/2010-2020/counties/totals/co-est2020-alldata.csv"
+    co_est2009_alldata: "{base}/datasets/2000-2009/counties/totals/co-est2009-alldata.csv"
+    # Vintage 2025 county housing-unit estimates (published only as an Excel table)
+    # Landing page: https://www.census.gov/data/datasets/time-series/demo/popest/2020s-total-housing-units.html
+    co_est2025_hu: "{base}/tables/2020-2025/housing/totals/CO-EST2025-HU.xlsx"
+  # YEAR codes in the county characteristics files -> reference date.
+  # cc-est2025: 1 = April 1, 2020 estimates base; 2..7 = July 1, 2020..2025.
+  # cc-est2020int: VERIFY against CC-EST2020INT-ALLDATA.pdf. run_prepare.py checks
+  #   the April 2010 and April 2020 codes against the census counts and stops
+  #   if they do not match.
+  year_codes:
+    cc_est2025_alldata: {1: "2020-04-01", 2: "2020-07-01", 3: "2021-07-01", 4: "2022-07-01",
+                         5: "2023-07-01", 6: "2024-07-01", 7: "2025-07-01"}
+    cc_est2020int_alldata: {1: "2010-04-01", 2: "2010-07-01", 3: "2011-07-01", 4: "2012-07-01",
+                            5: "2013-07-01", 6: "2014-07-01", 7: "2015-07-01", 8: "2016-07-01",
+                            9: "2017-07-01", 10: "2018-07-01", 11: "2019-07-01", 12: "2020-04-01"}
+
+# --- Census Data API (decennial census and ACS) ------------------------------
+# Free key: https://api.census.gov/data/key_signup.html  -> set CENSUS_API_KEY
+census_api:
+  base_url: "https://api.census.gov/data"
+  key_env: CENSUS_API_KEY
+  geography: "for=county:*&in=state:*"
+  pulls:
+    sf1_2010:      # 2010 Census Summary File 1
+      dataset: "2010/dec/sf1"
+      naming: "{table}{cell:03d}"
+      tables: {P012: 49, H003: 3, H004: 4, H005: 8, H017: 21}
+    dhc_2020:      # 2020 Census Demographic and Housing Characteristics
+      dataset: "2020/dec/dhc"
+      naming: "{table}_{cell:03d}N"
+      tables: {P12: 49, H3: 3, H4: 4, H5: 8, H13: 21}
+    sf1_2000:      # 2000 Census Summary File 1 (housing units only)
+      dataset: "2000/dec/sf1"
+      naming: "{table}{cell:03d}"
+      tables: {H001: 1}
+    acs5_2024:     # 2020-2024 American Community Survey 5-year estimates
+      dataset: "2024/acs/acs5"
+      naming: "{table}_{cell:03d}E"
+      moe_naming: "{table}_{cell:03d}M"
+      tables: {B01001: 49, B25007: 21, B25001: 1, B25003: 3, B25004: 8}
+
+# --- Census Building Permits Survey -------------------------------------------
+# Annual county files, comma-delimited, two header rows.
+# Columns: date, state, county, region, division, name, then
+# (buildings, units, value) for 1-unit, 2-unit, 3-4 unit, 5+ unit structures
+# (estimates with imputation), then the same 12 columns for reported-only.
+bps:
+  county_annual: "https://www2.census.gov/econ/bps/County/co{year}a.txt"
+  years: [2000, 2025]
+
+# --- HUD CHAS --------------------------------------------------------------------
+# Landing page: https://www.huduser.gov/portal/datasets/cp.html
+# Latest release: 2018-2022 ACS (released Dec 23, 2025). If the zip URL fails,
+# download "2018-2022, County (050), CSV" from the landing page into data/raw/chas/.
+chas:
+  chas_2018_2022:
+    zip_url: "https://www.huduser.gov/PORTAL/datasets/cp/2018thru2022-050-csv.zip"   # VERIFY
+    table_file: "Table8.csv"
+    # Table 8 (tenure x HAMFI income x cost burden). run_prepare.py checks that the
+    # five bands sum to the tenure totals and stops if this map is wrong; confirm
+    # against the data dictionary shipped in the zip.
+    columns:
+      total: T8_est1
+      owner_total: T8_est2
+      renter_total: T8_est68
+      owner:  {le30: T8_est3,  "30_50": T8_est16, "50_80": T8_est29, "80_100": T8_est42,  gt100: T8_est55}
+      renter: {le30: T8_est69, "30_50": T8_est82, "50_80": T8_est95, "80_100": T8_est108, gt100: T8_est121}
+  api:   # alternative route, one call per county; free token from HUD User
+    url: "https://www.huduser.gov/hudapi/public/chas?type=3&stateId={state}&entityId={county}"
+    token_env: HUD_API_TOKEN
+    fields:
+      owner:  {le30: A1, "30_50": A4, "50_80": A7, "80_100": A10, gt100: A13}
+      renter: {le30: A2, "30_50": A5, "50_80": A8, "80_100": A11, gt100: A14}
+
+# --- NCHS life tables ----------------------------------------------------------
+# Tables 2 = males, 3 = females. State tables are one file per state and sex.
+life_tables:
+  us2010:   # United States Life Tables, 2010 (NVSR 63-7, Nov 2014)
+    geo: US
+    year: 2010
+    url: "https://ftp.cdc.gov/pub/Health_Statistics/NCHS/Publications/NVSR/63_07/Table{tab:02d}.xlsx"
+    tables: {M: 2, F: 3}
+  us2024:   # United States Life Tables, 2024 (NVSR 75-5, Aug 2026)
+    geo: US
+    year: 2024
+    url: "https://ftp.cdc.gov/pub/Health_Statistics/NCHS/Publications/NVSR/75-05/Table{tab:02d}.xlsx"
+    tables: {M: 2, F: 3}
+  st2019:   # U.S. State Life Tables, 2019 (NVSR 70-18)            VERIFY file names
+    geo: state
+    year: 2019
+    url: "https://ftp.cdc.gov/pub/Health_Statistics/NCHS/Publications/NVSR/70-18/{abbr}{tab}.xlsx"
+    tables: {M: 2, F: 3}
+  st2022:   # U.S. State Life Tables, 2022 (NVSR 74-12, Dec 2025)  VERIFY file names
+    geo: state
+    year: 2022
+    url: "https://ftp.cdc.gov/pub/Health_Statistics/NCHS/Publications/NVSR/74-12/{abbr}{tab}.xlsx"
+    tables: {M: 2, F: 3}
+
+# --- National age-specific fertility rates -------------------------------------
+# Typed in from NCHS "Births: Final Data" reports; see config/national_asfr.csv.
+asfr_file: "config/national_asfr.csv"
+
+# --- BLS Quarterly Census of Employment and Wages ------------------------------
+# County total covered employment: own_code 0, industry_code 10, agglvl_code 70.
+qcew:
+  mode: singlefile      # "singlefile" = one national zip per year (~100 MB; needed for the
+                        #   cross-county employment regression); "slices" = one small file per
+                        #   county-year (demo counties only; fine for looking, too few to fit)
+  area_slice: "https://data.bls.gov/cew/data/api/{year}/a/area/{fips}.csv"
+  singlefile: "https://data.bls.gov/cew/data/files/{year}/csv/{year}_annual_singlefile.zip"
+  years: [2010, 2015, 2019, 2025]

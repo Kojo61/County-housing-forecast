@@ -1,0 +1,83 @@
+# =============================================================================
+# U.S. County Housing Needs Forecasting Model - Version 0.1
+# Model assumptions.
+#
+# Every technical or normative assumption the model uses lives in this file,
+# not in the code. Change a value here, re-run, and the change is recorded in
+# the run's output (output/<run>/run_manifest.json) and in git history.
+# =============================================================================
+version: "0.1.0"
+
+geography:
+  # Connecticut replaced its 8 counties with 9 planning regions in 2022, so its
+  # county series do not line up across 2010-2025; Puerto Rico is outside scope.
+  exclude_states: ["09", "72"]
+  # Historical county codes folded into their current equivalents.
+  recode:
+    "46113": "46102"   # Shannon County SD -> Oglala Lakota County (2015)
+    "51515": "51019"   # Bedford city VA merged into Bedford County (2013)
+    "02270": "02158"   # Wade Hampton AK -> Kusilvak Census Area (2015)
+
+population:
+  sex_ratio_at_birth: 1.05          # males per female at birth
+  # Net migration of children born during a 5-year step, as a share of the
+  # rate observed for the 0-4 -> 5-9 cohort (they are exposed for ~half the
+  # period). Used only when county births are not available for a window.
+  births_migration_factor: 0.5
+
+migration:
+  # Credibility shrinkage of county age-sex rates toward the state rate:
+  # w = exposure / (exposure + K), where exposure is the start-of-window
+  # population of the age-sex cell. Tune K in back-test A10 only.
+  shrinkage_K: 1000
+  # Survival + net migration cannot fall below this (prevents negative cells).
+  min_survival_plus_migration: 0.0
+
+fertility:
+  # Shrinkage of the county fertility index toward the state index:
+  # w = expected_births / (expected_births + K)
+  shrinkage_K: 250
+
+households:
+  # Empirical-Bayes shrinkage of ACS headship and ownership rates toward the
+  # state rate, using ACS margins of error. Census (full-count) rates are not
+  # shrunk because they have no sampling error.
+  shrink_acs_rates: true
+
+vacancy:
+  # NORMATIVE: vacancy allowance needed for a functioning market, by tenure.
+  target_owner:  {low: 0.015, base: 0.020, high: 0.025}
+  target_renter: {low: 0.050, base: 0.060, high: 0.080}
+  # Share of "other vacant" units (held off market, needing repair, etc.)
+  # counted as available supply. 0 = treat them as unavailable.
+  other_vacant_available_share: 0.0
+
+supply:
+  # Realization factor = net housing-unit change / units authorized by permits.
+  shrinkage_K: 1000          # in permitted units over the estimation window
+  bounds: [-1.0, 3.0]        # hard bounds on the shrunk factor
+  review_range: [0.5, 1.5]   # factors outside this range are flagged for review
+
+scenarios:
+  # Composite scenarios used for the headline low/base/high range of the gap.
+  composite:
+    low:  {migration: low,  headship: low,  vacancy: low,  supply: high}
+    base: {migration: base, headship: base, vacancy: base, supply: base}
+    high: {migration: high, headship: high, vacancy: high, supply: low}
+
+validation:
+  # Launch-year population size classes (upper bounds; last is open-ended).
+  size_class_breaks: [10000, 50000, 250000]
+  size_class_labels: ["<10k", "10k-50k", "50k-250k", "250k+"]
+  # Annualized growth over the benchmark base period (percent per year).
+  growth_class_breaks: [-0.1, 0.5]
+  growth_class_labels: ["declining", "stable", "growing"]
+  # Empirical prediction interval (EPI) quantiles of algebraic percent error.
+  epi_quantiles: [0.10, 0.90]
+
+employment:
+  # Use the employment-informed migration level in the production forecast?
+  # Leave false until back-test B5 shows it improves out-of-sample accuracy.
+  use_in_production: false
+
+income_bands: ["le30", "30_50", "50_80", "80_100", "gt100"]

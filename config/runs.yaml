@@ -1,0 +1,126 @@
+# =============================================================================
+# Run specifications.
+#
+# A "run" is one launch of the model: a base population, the calibration
+# windows it may learn from, and (for back-tests) the observed outcomes it is
+# scored against. The production forecast and every back-test use the SAME
+# code; only this specification changes.
+#
+# Information-set rule for back-tests: every input must describe a period at
+# or before the launch date. Targets are never read until scoring.
+#
+# Series names refer to the processed population / housing tables built by
+# run_prepare.py:
+#   v2025      PEP Vintage 2025 county estimates (Apr 2020 base, Jul 2020-2025)
+#   int2020    PEP 2010-2020 intercensal county estimates
+#   int2000    PEP 2000-2010 intercensal county estimates (+ Census 2010 count)
+#   census2000 / census2010 / census2020   decennial census counts
+# Life-table ids refer to config/sources.yaml -> life_tables.
+# =============================================================================
+
+production:
+  description: "Version 0.1 forecast: launch July 1, 2025; horizons 2030 and 2035."
+  launch: {series: v2025, date: "2025-07-01"}
+  steps: 2                       # 5-year steps
+  history:                       # long and short base periods for benchmarks / growth classes
+    - {series: int2020, date: "2015-07-01"}
+    - {series: v2025,  date: "2020-07-01"}
+  migration_windows:
+    - {id: w15_20, start: {series: int2020, date: "2015-07-01"}, end: {series: int2020, date: "2020-04-01"}, life_table: st2019}
+    - {id: w20_25, start: {series: v2025,  date: "2020-07-01"}, end: {series: v2025,  date: "2025-07-01"}, life_table: st2022,
+       births: {series: v2025, years: [2021, 2025]}}
+  migration_weights: {w15_20: 0.5, w20_25: 0.5}
+  projection_life_table: st2022
+  fertility:
+    asfr_year: 2024
+    index: {births_series: v2025, years: [2021, 2025], pop_series: v2025}
+  households:
+    base: acs5_2024
+    alternatives: [dhc_2020, sf1_2010]   # low/high headship = min/max by age across these and base
+  vacancy: acs5_2024
+  chas: chas_2018_2022
+  supply:
+    base_hu: {series: v2025, date: "2025-07-01"}
+    realization: {start: {series: census2010}, end: {series: census2020}, permit_years: [2010, 2019]}
+    projection_permit_years: [2021, 2025]
+  employment:
+    train: {target_window: w20_25, emp_years: [2015, 2019], prior_window: w15_20}
+    apply: {emp_years: [2019, 2025], prior_window: w20_25}
+
+testA10:
+  description: "Back-test A: launch April 1, 2010 (Census 2010); scored against Census 2020 counts."
+  launch: {series: int2000, date: "2010-04-01"}
+  steps: 2
+  history:
+    - {series: int2000, date: "2000-04-01"}
+    - {series: int2000, date: "2005-07-01"}
+  migration_windows:
+    - {id: w00_05, start: {series: int2000, date: "2000-07-01"}, end: {series: int2000, date: "2005-07-01"}, life_table: us2010}
+    # Ends at the April 2010 census count (the launch), not July 2010, so no
+    # post-launch information enters; the 4.75-year window is rescaled to 5 years.
+    - {id: w05_10, start: {series: int2000, date: "2005-07-01"}, end: {series: int2000, date: "2010-04-01"}, life_table: us2010}
+  migration_weights: {w00_05: 0.5, w05_10: 0.5}
+  projection_life_table: us2010
+  fertility:
+    asfr_year: 2009        # calendar 2010 rates would extend past the April 2010 launch
+    index: {births_series: v2009, years: [2005, 2009], pop_series: int2000}
+  households:
+    base: sf1_2010
+  vacancy: sf1_2010
+  supply:
+    base_hu: {series: census2010, date: "2010-04-01"}
+    realization: {start: {series: census2000}, end: {series: census2010}, permit_years: [2000, 2009]}
+    projection_permit_years: [2005, 2009]
+    conditional_permit_years: [2010, 2019]   # diagnostic only: uses permits after launch
+  targets:
+    - {step: 2, measure: pop,        source: population,      series: census2020, date: "2020-04-01"}
+    - {step: 2, measure: households, source: households_base, series: dhc_2020}
+    - {step: 2, measure: owners,     source: households_base, series: dhc_2020}
+    - {step: 2, measure: renters,    source: households_base, series: dhc_2020}
+    - {step: 2, measure: hu,         source: housing_units,   series: census2020, date: "2020-04-01"}
+
+testA5:
+  description: "Back-test A5: launch July 1, 2010; 5-year population test against intercensal July 2015 (calibrates 5-year intervals)."
+  launch: {series: int2020, date: "2010-07-01"}
+  steps: 1
+  history:
+    - {series: int2000, date: "2000-07-01"}
+    - {series: int2000, date: "2005-07-01"}
+  migration_windows:
+    - {id: w00_05, start: {series: int2000, date: "2000-07-01"}, end: {series: int2000, date: "2005-07-01"}, life_table: us2010}
+    - {id: w05_10, start: {series: int2000, date: "2005-07-01"}, end: {series: int2000, date: "2010-07-01"}, life_table: us2010}
+  migration_weights: {w00_05: 0.5, w05_10: 0.5}
+  projection_life_table: us2010
+  fertility:
+    asfr_year: 2009        # calendar 2010 rates would extend past the April 2010 launch
+    index: {births_series: v2009, years: [2005, 2009], pop_series: int2000}
+  targets:
+    - {step: 1, measure: pop, source: population, series: int2020, date: "2015-07-01"}
+
+testB5:
+  description: "Back-test B: launch July 1, 2020; scored against Vintage 2025 July 1, 2025 estimates. Held out: run after the methodology is frozen."
+  launch: {series: v2025, date: "2020-07-01"}
+  steps: 1
+  history:
+    - {series: int2020, date: "2010-07-01"}
+    - {series: int2020, date: "2015-07-01"}
+  migration_windows:
+    - {id: w10_15, start: {series: int2020, date: "2010-07-01"}, end: {series: int2020, date: "2015-07-01"}, life_table: st2019}
+    - {id: w15_20, start: {series: int2020, date: "2015-07-01"}, end: {series: int2020, date: "2020-04-01"}, life_table: st2019}
+  migration_weights: {w10_15: 0.5, w15_20: 0.5}
+  projection_life_table: st2019
+  fertility:
+    asfr_year: 2019
+    index: {births_series: v2020, years: [2016, 2020], pop_series: int2020}
+  supply:
+    base_hu: {series: v2025, date: "2020-07-01"}
+    realization: {start: {series: census2010}, end: {series: census2020}, permit_years: [2010, 2019]}
+    projection_permit_years: [2015, 2019]
+  employment:
+    train: {target_window: w15_20, emp_years: [2010, 2015], prior_window: w10_15}
+    apply: {emp_years: [2015, 2019], prior_window: w15_20}
+  targets:
+    - {step: 1, measure: pop, source: population,    series: v2025, date: "2025-07-01"}
+    # PEP housing-unit estimates are built from permits, so this comparison is
+    # a consistency check, not an independent test.
+    - {step: 1, measure: hu,  source: housing_units, series: v2025, date: "2025-07-01", diagnostic: true}

@@ -1,0 +1,23 @@
+cff-version: 1.2.0
+message: "If you use this model, please cite it as below."
+title: "U.S. County Housing Needs Forecasting Model"
+version: 0.1.0
+date-released: 2026-01-01   # replace with the release date
+authors:
+  - family-names: "Oduro"
+    given-names: "Gideon"
+    orcid: "https://orcid.org/0009-0002-9593-094X"   # replace or remove
+license: MIT
+repository-code: "https://github.com/Kojo61/county-housing-forecast"
+abstract: >-
+  An open, reproducible county-level model of 5- and 10-year housing needs for the
+  United States: cohort-component population projection, household formation by
+  tenure and HUD income band, housing-unit requirement, expected supply from the
+  authorized construction pipeline, and the resulting gap, validated by historical
+  back-tests against benchmark forecasts.
+keywords:
+  - housing needs
+  - population projection
+  - cohort-component
+  - household formation
+  - small-area forecasting
