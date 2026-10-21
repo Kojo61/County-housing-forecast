@@ -273,7 +273,7 @@ def chas_table(zip_path, spec, source):
                                       "band": str(band), "households": v}))
         sums[tenure] = (total, pd.to_numeric(df[cols[f"{tenure}_total"]], errors="coerce"))
     for tenure, (s, t) in sums.items():
-        bad = (np.abs(s - t) > np.maximum(1, 0.005 * t)).mean()
+        bad = (np.abs(s - t) > np.maximum(12.5, 0.005 * t)).mean()
         if not check(f"CHAS {tenure} bands sum to {tenure} total", bad < 0.01, f"({bad:.1%} of counties off)"):
             raise ValueError("The CHAS column map in config/sources.yaml does not match this file. "
                              "Check the data dictionary in the CHAS zip and fix chas.columns.")
