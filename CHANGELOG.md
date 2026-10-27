@@ -42,3 +42,11 @@ comment or back-test result that motivated them.
   was -0.009 (s.e. 0.068), indistinguishable from zero, and accuracy fell for the
   largest and smallest counties. Kept out of production (use_in_production: false).
 
+### Demonstration counties revised (October 26, 2026, after the production run)
+- Whitman County, WA (53075) moved from the demonstration set to a stress-test
+  appendix: its student-dominated population produced a large measured surplus
+  (about 5,100 units against 17,000 households) that we could not explain.
+- Replaced by Stevens County, WA (53065), a small rural county of similar size,
+  chosen for its role before its results were viewed.
+- The model, its settings and the national results are unchanged; Whitman's
+  results remain in output/production/summary.csv and are reported in the appendix.
