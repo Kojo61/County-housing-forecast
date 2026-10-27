@@ -21,3 +21,12 @@ comment or back-test result that motivated them.
 - Optional employment-informed migration level, evaluated out of sample in B5.
 - Independent R engine and Python–R cross-check.
 - Data acquisition with a provenance log and preparation with layout checks.
+
+### Changed (set in development back-tests A10 and A5, October 2026)
+- Migration shrinkage K lowered from 1,000 to 100. Tested 1,000, 250, 100, 25 and 0 on A10;
+  K = 100 tied for lowest error (MAPE 7.02% -> 6.76%) and reduced upward bias (+4.84% -> +3.96%),
+  which was largest in counties under 10,000 people. Confirmed on A5 (3.94% -> 3.84%).
+- Housing pipeline uses the latest three permit years instead of five (production 2023-2025,
+  B5 2017-2019, A10 2007-2009). On A10 the five-year window reached into the housing boom;
+  housing-unit MAPE 7.84% -> 6.65%.
+- B5 was not run before these choices were fixed.

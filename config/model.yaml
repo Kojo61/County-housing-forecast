@@ -29,7 +29,7 @@ migration:
   # Credibility shrinkage of county age-sex rates toward the state rate:
   # w = exposure / (exposure + K), where exposure is the start-of-window
   # population of the age-sex cell. Tune K in back-test A10 only.
-  shrinkage_K: 1000
+  shrinkage_K: 100
   # Survival + net migration cannot fall below this (prevents negative cells).
   min_survival_plus_migration: 0.0
 

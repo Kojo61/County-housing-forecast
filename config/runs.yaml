@@ -42,7 +42,7 @@ production:
   supply:
     base_hu: {series: v2025, date: "2025-07-01"}
     realization: {start: {series: census2010}, end: {series: census2020}, permit_years: [2010, 2019]}
-    projection_permit_years: [2021, 2025]
+    projection_permit_years: [2023, 2025]
   employment:
     train: {target_window: w20_25, emp_years: [2015, 2019], prior_window: w15_20}
     apply: {emp_years: [2019, 2025], prior_window: w20_25}
@@ -70,7 +70,7 @@ testA10:
   supply:
     base_hu: {series: census2010, date: "2010-04-01"}
     realization: {start: {series: census2000}, end: {series: census2010}, permit_years: [2000, 2009]}
-    projection_permit_years: [2005, 2009]
+    projection_permit_years: [2007, 2009]
     conditional_permit_years: [2010, 2019]   # diagnostic only: uses permits after launch
   targets:
     - {step: 2, measure: pop,        source: population,      series: census2020, date: "2020-04-01"}
@@ -115,7 +115,7 @@ testB5:
   supply:
     base_hu: {series: v2025, date: "2020-07-01"}
     realization: {start: {series: census2010}, end: {series: census2020}, permit_years: [2010, 2019]}
-    projection_permit_years: [2015, 2019]
+    projection_permit_years: [2017, 2019]
   employment:
     train: {target_window: w15_20, emp_years: [2010, 2015], prior_window: w10_15}
     apply: {emp_years: [2015, 2019], prior_window: w15_20}
