@@ -34,8 +34,8 @@ comment or back-test result that motivated them.
 ### Held-out back-test B5 (run October 26, 2026, after methodology v0.1 was committed)
 - Population 2020 -> 2025, 3,135 counties: model MAPE 3.19% (bias -1.53%);
   trend average 2.77%; no change 3.79%.
-- Counties over 250,000 people: model 2.20%, the most accurate method
-  (trend average 2.43%, no change 4.22%).
+- Counties over 250,000 people: model 2.20%, second of seven methods behind the
+    5-year exponential trend (1.88%); trend average 2.43%, no change 4.22%.
 - 80% intervals calibrated on A5 covered 59% of outcomes. Production 5-year
   intervals use A5 and B5 errors together, as specified before B5 was run.
 - Employment add-on: MAPE 3.15% vs 3.19%, but the employment-growth coefficient
